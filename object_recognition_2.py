@@ -119,69 +119,77 @@ def pcl_callback(pcl_msg):
 
     # create an empty list to store the labels and point clouds
     color_cluster_point_list = []
-    pcl_cluster = []
     detected_objects_labels = []
     detected_objects = []
 
     for j, indices in enumerate(cluster_indices):
-
+        
+        #initialize a list of 
+        object_clusters = []
+        
         for i, indice in enumerate(indices):
-            pcl_cluster.append([cloud_objects[indice][0],
+            #extract point cloud information for each object (x, y, z, RGB)
+            object_clusters.append([cloud_objects[indice][0],
                                 cloud_objects[indice][1],
                                 cloud_objects[indice][2],
                                 cloud_objects[indice][3]])
-
+            # extract point cloud informtion and assign RGB value to points in cluster
+            # the RBG value is determined using the get_color_list function which is random
             color_cluster_point_list.append([white_cloud[indice][0],
                                              white_cloud[indice][1],
                                              white_cloud[indice][2],
                                              rgb_to_float(cluster_color[j])])
 
 
-# convert the cluster from pcl to ROS using helper function
-ros_cluster = pcl_to_ros(pcl_cluster)
+        # convert the cluster from pcl to ROS using helper function
+        pcl_cluster = pcl.PointCloud_PointXYZRGB()
+        pcl_cluster.from_list(object_clusters)
+        
+        #convert pcl to ros format
+        ros_cluster = pcl_to_ros(pcl_cluster)
 
-# Extract the histogram features from the cloud
-# same way as done in capture_features.py
-# Compute the associated feature vector
-chists = compute_color_histograms(ros_cluster, using_hsv=False)
-normals = get_normals(ros_cluster)
-nhists = compute_normal_histograms(normals)
-feature = np.concatenate((chists, nhists))
+        # Extract the histogram features from the cloud
+        # same way as done in capture_features.py
+        # Compute the associated feature vector
+        chists = compute_color_histograms(ros_cluster, using_hsv=False)
+        normals = get_normals(ros_cluster)
+        nhists = compute_normal_histograms(normals)
+        feature = np.concatenate((chists, nhists))
 
-# Make the prediction
-# retrieve the corresponding label and add it to detected_objects_labels
-prediction = clf.predict(scaler.transform(feature.reshape(1, -1)))
-label = encoder.inverse_transform(prediction)[0]
-detected_objects_labels.append(label)
+        # Make the prediction
+        # retrieve the corresponding label and add it to detected_objects_labels
+        prediction = clf.predict(scaler.transform(feature.reshape(1, -1)))
+        label = encoder.inverse_transform(prediction)[0]
+        detected_objects_labels.append(label)
 
-# add detected objects to the list of detected objects
-label_pos = list(white_cloud[pts_list[0]])
-label_pos[2] += 0.4
-object_markers_pub.publish(make_label(label, label_pos, index))
+        # add detected objects to the list of detected objects
+        label_pos = list(white_cloud[indices[0]])
+        label_pos[2] += 0.4
+        object_markers_pub.publish(make_label(label, label_pos, j))
 
-# add the detected object to the lsit of detected objects.
-do = DetectedObject()
-do.label = label
-do.cloud = ros_cluster
-detected_objects.append(do)
+        # add the detected object to the lsit of detected objects.
+        do = DetectedObject()
+        do.label = label
+        do.cloud = ros_cluster
+        detected_objects.append(do)
 
-# create new cloud containing all clusters, each with unique color
-cluster_cloud = pcl.PointCloud_PointXYZRGB()
-cluster_cloud.from_list(color_cluster_point_list)
+    # create new cloud containing all clusters, each with unique color
+    cluster_cloud = pcl.PointCloud_PointXYZRGB()
+    cluster_cloud.from_list(color_cluster_point_list)
 
-# TODO: Convert PCL data to ROS messages
-ros_cloud_objects = pcl_to_ros(cloud_objects)
-ros_cloud_table = pcl_to_ros(cloud_table)
-ros_cluster_cloud = pcl_to_ros(cluster_cloud)
+    # TODO: Convert PCL data to ROS messages
+    ros_cloud_objects = pcl_to_ros(cloud_objects)
+    ros_cloud_table = pcl_to_ros(cloud_table)
+    ros_cluster_cloud = pcl_to_ros(cluster_cloud)
 
-# TODO: Publish ROS messages
-pcl_objects_pub.publish(ros_cloud_objects)
-pcl_table_pub.publish(ros_cloud_table)
-pcl_cluster_pub.publish(ros_cluster_cloud)
+    # TODO: Publish ROS messages
+    pcl_objects_pub.publish(ros_cloud_objects)
+    pcl_table_pub.publish(ros_cloud_table)
+    pcl_cluster_pub.publish(ros_cluster_cloud)
 
-rospy.loginfo('Detected {} objects: {}'.format(len(detected_objects_labels), detected_objects_labels))
-# Publish the list of detected objects
-detected_objects_pub.publish(detected_objects)
+    rospy.loginfo('Detected {} objects: {}'.format(len(detected_objects_labels), detected_objects_labels))
+    # Publish the list of detected objects
+    detected_objects_pub.publish(detected_objects)
 
 if __name__ == '__main__':
 
