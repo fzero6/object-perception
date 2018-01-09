@@ -118,7 +118,7 @@ def pcl_callback(pcl_msg):
 
     # create an empty list to store the labels and point clouds
 	color_cluster_point_list = []
-    pcl_cluster = []
+	pcl_cluster = []
 	detected_objects_labels = []
 	detected_objects = []
 
@@ -131,10 +131,10 @@ def pcl_callback(pcl_msg):
                                 cloud_objects[indice][3]])
 
 
-			color_cluster_point_list.append([white_cloud[indice][0],
-											white_cloud[indice][1],
-											white_cloud[indice][2],
-											rgb_to_float(cluster_color[j])])
+            color_cluster_point_list.append([white_cloud[indice][0],
+								            white_cloud[indice][1],
+								            white_cloud[indice][2],
+								            rgb_to_float(cluster_color[j])])
 
         # convert the cluster from pcl to ROS using helper function
         ros_cluster = pcl_to_ros(pcl_cluster)
