@@ -18,7 +18,7 @@ from sensor_stick.pcl_helper import *
 
 def get_normals(cloud):
     get_normals_prox = rospy.ServiceProxy('/feature_extractor/get_normals', GetNormals)
-    return get_normals_prox(cloud).cluster 
+    return get_normals_prox(cloud).cluster
 
 # Callback function for your Point Cloud Subscriber
 def pcl_callback(pcl_msg):
@@ -77,11 +77,11 @@ def pcl_callback(pcl_msg):
 
     # Extract objects
     #cloud_objects = cloud_filtered.extract(inliers, negative=True)
-    
+
     # Extract outliers
     # create the filter objectd
     objects = cloud_filtered.extract(inliers, negative = True)
-    
+
     outlier_filter = objects.make_statistical_outlier_filter()
 
     # set the number of points to analyze for any given point
@@ -93,8 +93,8 @@ def pcl_callback(pcl_msg):
     outlier_filter.set_std_dev_mul_thresh(x)
     # call the filter function
     cloud_objects = outlier_filter.filter()
-    
-    # TODO: Euclidean Clustering 
+
+    # TODO: Euclidean Clustering
     white_cloud = XYZRGB_to_XYZ(cloud_objects)
     tree = white_cloud.make_kdtree()
 
@@ -110,44 +110,44 @@ def pcl_callback(pcl_msg):
     ec.set_MaxClusterSize(2000)
     ec.set_SearchMethod(tree)
     cluster_indices = ec.Extract()
-    
+
     # TODO: Create Cluster-Mask Point Cloud to visualize each cluster separately
-    
+
     # assign colors to the individual point cloud indices for visualization
     cluster_color = get_color_list(len(cluster_indices))
 
     color_cluster_point_list = []
 
     for j, indices in enumerate(cluster_indices):
-		for i, indice in enumerate(indices):
-			color_cluster_point_list.append([white_cloud[indice][0],
-				                            white_cloud[indice][1],
-				                            white_cloud[indice][2],
-				                            rgb_to_float(cluster_color[j])])
+    for i, indice in enumerate(indices):
+    color_cluster_point_list.append([white_cloud[indice][0],
+    white_cloud[indice][1],
+    white_cloud[indice][2],
+    rgb_to_float(cluster_color[j])])
 
     # create new cloud containing all clusters, each with unique color
     cluster_cloud = pcl.PointCloud_PointXYZRGB()
-    cluster_cloud.from_list(color_cluster_point_list)       
-    
+    cluster_cloud.from_list(color_cluster_point_list)
+
     # TODO: Convert PCL data to ROS messages
     ros_cloud_objects = pcl_to_ros(cloud_objects)
     ros_cloud_table = pcl_to_ros(cloud_table)
     ros_cluster_cloud = pcl_to_ros(cluster_cloud)
 
     # TODO: Publish ROS messages
-    pcl_objects_pub.publish(ros_cloud_objects) 
+    pcl_objects_pub.publish(ros_cloud_objects)
     pcl_table_pub.publish(ros_cloud_table)
     pcl_cluster_pub.publish(ros_cluster_cloud)
-    
-# Exercise-3 TODO : 
+
+# Exercise-3 TODO :
 
     # create an empty list to store the labels and point clouds
     detected_objects_labels = []
     detected_objects = []
-    
+
     for index, pts_list in enumerate(cluster_indices):
     # Grab the points for the cluster
-    pcl_cluster = cloud_objects.extract(pts_list)   
+    pcl_cluster = cloud_objects.extract(pts_list)
 
         # convert the cluster from pcl to ROS using helper function
         ros_cluster = pcl_to_ros(pcl_cluster)
@@ -176,12 +176,12 @@ def pcl_callback(pcl_msg):
         do.cloud = ros_cluster
         detected_objects.append(do)
         print(index)
-    
-        		
+
+
         # Publish a label into RViz
 
         # Add the detected object to the list of detected objects.
-    
+
     rospy.loginfo('Detected {} objects: {}'.format(len(detected_objects_labels), detected_objects_labels))
     # Publish the list of detected objects
     detected_objects_pub.publish(detected_objects)
@@ -201,14 +201,14 @@ if __name__ == '__main__':
     detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
     # Initialize color_list
     get_color_list.color_list = []
-       
+
     # TODO: Load Model From disk; Exercise 3
     model = pickle.load(open('model.sav', 'rb'))
     clf = model['classifier']
     encoder = LabelEncoder()
     encoder.classes_ = model['classes']
     scaler = model['scaler']
-    
+
     # Initialize color_list
     get_color_list.color_list = []
 
