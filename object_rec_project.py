@@ -190,7 +190,7 @@ def pcl_callback(pcl_msg):
         label_pos[2] += 0.4
         object_markers_pub.publish(make_label(label, label_pos, j))
 
-        # add the detected object to the lsit of detected objects.
+        # add the detected object to the list of detected objects.
         do = DetectedObject()
         do.label = label
         do.cloud = ros_cluster
@@ -218,7 +218,7 @@ def pcl_callback(pcl_msg):
     # Could add some logic to determine whether or not your object detections are robust
     # before calling pr2_mover()
     try:
-        pr2_mover(detected_objects_list)
+        pr2_mover(detected_objects)
     except rospy.ROSInterruptException:
         pass
 
@@ -226,22 +226,41 @@ def pcl_callback(pcl_msg):
 def pr2_mover(object_list):
 
     # TODO: Initialize variables
+    # initializing list for labels
+    labels = []
+    #initializing list of tuples for the centroids (x, y, z)
+    centroids = []
 
     # TODO: Get/Read parameters
-
+    object_list_param = rospy.get_param('/object_list')
     # TODO: Parse parameters into individual variables
+    object_name = object_list_param[i]['name']
+    object_group = object_list_param[i]['group']
 
     # TODO: Rotate PR2 in place to capture side tables for the collision map
 
     # TODO: Loop through the pick list
-
+    for item in object_name:
+        
         # TODO: Get the PointCloud for a given object and obtain it's centroid
+        # add the object list label to the labels list. object_list.label points to detected object
+        labels.append(object_list.label)
+        # convert the object to an array
+        points_arr = ros_to_pcl(object_list.cloud).to_array()
+        # compute the centroid of the object
+        centroids.append(np.asscalar(np.mean(points_arr, axis=0))[:3])
 
         # TODO: Create 'place_pose' for the object
 
         # TODO: Assign the arm to be used for pick_place
 
         # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
+        pick_pose = Pose()
+        pick_pose.position.x = centroids[0]
+        pick_pose.position.y = centroids[1]
+        pick_pose.position.z = centroids[2]
+
+        yaml_dict = make_yaml_dict(pick_pose)
 
         # Wait for 'pick_place_routine' service to come up
         rospy.wait_for_service('pick_place_routine')
@@ -276,8 +295,6 @@ if __name__ == '__main__':
     # Create publishers for object markers and detected objects
     object_markers_pub = rospy.Publisher("/object_markers", Marker, queue_size=1)
     detected_objects_pub = rospy.Publisher("/detected_objects", DetectedObjectsArray, queue_size=1)
-    # Initialize color_list
-    get_color_list.color_list = []
 
     # TODO: Load Model From disk; Exercise 3
     model = pickle.load(open('model.sav', 'rb'))
