@@ -99,8 +99,8 @@ def pcl_callback(pcl_msg):
     # set filter axis to y to isolate the table objects on table and remove peripheral edges of table
     filter_axis = 'y'
     passthrough.set_filter_field_name(filter_axis)
-    axis_min = -0.5  # trials:
-    axis_max = 0.5  # trials:
+    axis_min = -0.4  # trials: -0.5(too large)
+    axis_max = 0.4  # trials: 0.5
     passthrough.set_filter_limits(axis_min, axis_max)
     # generate the resultant point cloud; was cloud_filtered =
     cloud_objects = passthrough.filter()
