@@ -298,13 +298,13 @@ def pr2_mover(object_list):
             if object_group == "red":
                 arm_name.data = "left"
                 place_pose.position.x = 0
-                place_pose.postion.y = 0.71
+                place_pose.position.y = 0.71
                 place_pose.position.z = 0.605
             else:
                 # group = green then use the right bin
                 arm_name.data = "right"
                 place_pose.position.x = 0
-                place_pose.postion.y = -0.71
+                place_pose.position.y = -0.71
                 place_pose.position.z = 0.605
 
             # TODO: Create 'place_pose' for the object
