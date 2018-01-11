@@ -106,6 +106,7 @@ def pcl_callback(pcl_msg):
     cloud_objects = passthrough.filter()
     filename = './debug/passthrough_filter_y.pcd'
     pcl.save(cloud_objects, filename)
+
     '''
     # RANSAC plane segmentation
     # create the segmentation object
@@ -245,14 +246,9 @@ def pr2_mover(object_list):
     # initializing list for detected object labels
     labels = []
 
-    #initializing list of tuples for the centroids (x, y, z)
+    # initializing list of tuples for the centroids (x, y, z)
     centroids = []
     yaml_list = []
-
-    #intitialize the data types for the test_scene_number and object_name variables
-    test_scene_num  = Int32()
-    object_name = String()
-
 
     # TODO: Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
@@ -277,19 +273,30 @@ def pr2_mover(object_list):
 
             # TODO: Calculate the centroid of the object to pick
             # add the object list label to the labels list. object_list.label points to detected object
-            labels.append(object_list.label)
+            labels.append(detected_val.label)
             # convert the object to an array
-            points_arr = ros_to_pcl(object_list.cloud).to_array()
+            points_arr = ros_to_pcl(detected_val.cloud).to_array()
             # compute the centroid of the object, data will be float64 => convert to python/ROS format
             centroids.append(np.asscalar(np.mean(points_arr, axis=0))[:3])
 
             # set the test scene number or grab it from the
+            test_scene_num = Int32()
             scene_number = 1
             test_scene_num.data = scene_number
 
             # set the object name for the current object
-            object_name.data = object_list_param[i]['name']
+            object_name = String()
+            object_name.data = i['name']
 
+            # calculate the arm name based on the group name
+            # initialize the arm name data type
+            arm_name = String()
+            # use the left bin if the group name from yaml file is red
+            if object_group == "red":
+                arm_name.data = "left"
+            else:
+                # group = green then use the right bin
+                arm_name.data = "right"
 
             # TODO: Create 'place_pose' for the object
             # TODO: Assign the arm to be used for pick_place
@@ -300,10 +307,10 @@ def pr2_mover(object_list):
             pick_pose.position.y = centroids[1]
             pick_pose.position.z = centroids[2]
 
-            # MAKE THE YAML FILE
+            # MAKE THE YAML FILE for each detected item
             # input format for the yaml function below
             # make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
-            yaml_dict = make_yaml_dict(None,None,None,pick_pose,None)
+            yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, None)
 
             yaml_list.append(yaml_dict)
 
