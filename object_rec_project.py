@@ -71,7 +71,7 @@ def pcl_callback(pcl_msg):
     # create a voxelgrid filter object for our input point cloud
     vox = cloud_filtered.make_voxel_grid_filter()
     # Choose a voxel (also known as leaf) size
-    LEAF_SIZE = 0.01
+    LEAF_SIZE = 0.005
     # set the voxel (or leaf)size
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     # Call the filter function to obtain the resultant downsampled point cloud
@@ -97,15 +97,15 @@ def pcl_callback(pcl_msg):
     # create pass through filter object
     passthrough = cloud_filtered.make_passthrough_filter()
     # set filter axis to y to isolate the table objects on table and remove peripheral edges of table
-    filter_axis = 'x'
+    filter_axis = 'y'
     passthrough.set_filter_field_name(filter_axis)
-    axis_min = -0.5  # trials: -0.5(too large)
-    axis_max = 0.5  # trials: 0.5
+    axis_min = -0.4  # trials: -0.5(too large)
+    axis_max = 0.4  # trials: 0.5
     passthrough.set_filter_limits(axis_min, axis_max)
     # generate the resultant point cloud; was cloud_filtered =
     cloud_objects = passthrough.filter()
     filename = './debug/passthrough_filter_y.pcd'
-    pcl.save(cloud_filtered, filename)
+    pcl.save(cloud_objects, filename)
     '''
     # RANSAC plane segmentation
     # create the segmentation object
