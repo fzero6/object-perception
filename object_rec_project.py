@@ -277,7 +277,10 @@ def pr2_mover(object_list):
             # convert the object to an array
             points_arr = ros_to_pcl(detected_val.cloud).to_array()
             # compute the centroid of the object, data will be float64 => convert to python/ROS format
-            centroids.append(np.asscalar(np.mean(points_arr, axis=0))[:3])
+            centroids.append(np.mean(points_arr, axis=0)[:3])
+
+            for x in centroids:
+                centroids_scalar = np.asscalar(x)
 
             # set the test scene number or grab it from the
             test_scene_num = Int32()
@@ -303,9 +306,9 @@ def pr2_mover(object_list):
 
             # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
             pick_pose = Pose()
-            pick_pose.position.x = centroids[0]
-            pick_pose.position.y = centroids[1]
-            pick_pose.position.z = centroids[2]
+            pick_pose.position.x = centroids_scalar[0]
+            pick_pose.position.y = centroids_scalar[1]
+            pick_pose.position.z = centroids_scalar[2]
 
             # MAKE THE YAML FILE for each detected item
             # input format for the yaml function below
