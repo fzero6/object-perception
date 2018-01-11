@@ -64,8 +64,8 @@ def pcl_callback(pcl_msg):
     # call the filter function
     cloud_filtered = outlier_filter.filter()
     # debug checking
-    filename = './debug/outlier_removal.pcd'
-    pcl.save(cloud_filtered, filename)
+    # filename = './debug/outlier_removal.pcd'
+    # pcl.save(cloud_filtered, filename)
 
 
     # create a voxelgrid filter object for our input point cloud
@@ -76,8 +76,8 @@ def pcl_callback(pcl_msg):
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     # Call the filter function to obtain the resultant downsampled point cloud
     cloud_filtered = vox.filter()
-    filename = './debug/voxel_downsampled.pcd'
-    pcl.save(cloud_filtered, filename)
+    # filename = './debug/voxel_downsampled.pcd'
+    # pcl.save(cloud_filtered, filename)
 
     # PassThrough filter
     # create pass through filter object
@@ -90,8 +90,8 @@ def pcl_callback(pcl_msg):
     passthrough.set_filter_limits(axis_min, axis_max)
     # generate the resultant point cloud
     cloud_filtered = passthrough.filter()
-    filename = './debug/passthrough_filter_z.pcd'
-    pcl.save(cloud_filtered, filename)
+    # filename = './debug/passthrough_filter_z.pcd'
+    # pcl.save(cloud_filtered, filename)
 
     # PassThrough filter
     # create pass through filter object
@@ -104,8 +104,8 @@ def pcl_callback(pcl_msg):
     passthrough.set_filter_limits(axis_min, axis_max)
     # generate the resultant point cloud; was cloud_filtered =
     cloud_objects = passthrough.filter()
-    filename = './debug/passthrough_filter_y.pcd'
-    pcl.save(cloud_objects, filename)
+    # filename = './debug/passthrough_filter_y.pcd'
+    # pcl.save(cloud_objects, filename)
 
     '''
     # RANSAC plane segmentation
@@ -210,8 +210,8 @@ def pcl_callback(pcl_msg):
     # create new cloud containing all clusters, each with unique color
     cluster_cloud = pcl.PointCloud_PointXYZRGB()
     cluster_cloud.from_list(color_cluster_point_list)
-    filename = './debug/cluster_clouds.pcd'
-    pcl.save(cluster_cloud, filename)
+    # filename = './debug/cluster_clouds.pcd'
+    # pcl.save(cluster_cloud, filename)
 
     # TODO: Convert PCL data to ROS messages
     ros_cloud_objects = pcl_to_ros(cloud_objects)
