@@ -248,7 +248,6 @@ def pr2_mover(object_list):
 
     # initializing list of tuples for the centroids (x, y, z)
     centroids = []
-    centroid_data = []
     yaml_list = []
 
     # TODO: Get/Read parameters
@@ -278,10 +277,9 @@ def pr2_mover(object_list):
             # convert the object to an array
             points_arr = ros_to_pcl(detected_val.cloud).to_array()
             # compute the centroid of the object, data will be float64 => convert to python/ROS format
-            centroid_data.append(np.mean(points_arr, axis=0)[:3])
-
+            centroid_data = np.mean(points_arr, axis=0)[:3]
             for x in centroid_data:
-                centroids = np.asscalar(x)
+                centroids.append(np.asscalar(x))
 
             # set the test scene number or grab it from the
             test_scene_num = Int32()
@@ -295,12 +293,19 @@ def pr2_mover(object_list):
             # calculate the arm name based on the group name
             # initialize the arm name data type
             arm_name = String()
+            place_pose = Pose()
             # use the left bin if the group name from yaml file is red
             if object_group == "red":
                 arm_name.data = "left"
+                place_pose.position.x = 0
+                place_pose.postion.y = 0.71
+                place_pose.position.z = 0.605
             else:
                 # group = green then use the right bin
                 arm_name.data = "right"
+                place_pose.position.x = 0
+                place_pose.postion.y = -0.71
+                place_pose.position.z = 0.605
 
             # TODO: Create 'place_pose' for the object
             # TODO: Assign the arm to be used for pick_place
@@ -314,7 +319,7 @@ def pr2_mover(object_list):
             # MAKE THE YAML FILE for each detected item
             # input format for the yaml function below
             # make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
-            yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, None)
+            yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
 
             yaml_list.append(yaml_dict)
 
