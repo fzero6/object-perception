@@ -63,7 +63,7 @@ def pcl_callback(pcl_msg):
     outlier_filter.set_std_dev_mul_thresh(x)
     # call the filter function
     cloud_filtered = outlier_filter.filter()
-    #debug checking
+    # debug checking
     filename = './debug/outlier_removal.pcd'
     pcl.save(cloud_filtered, filename)
 
@@ -71,7 +71,7 @@ def pcl_callback(pcl_msg):
     # create a voxelgrid filter object for our input point cloud
     vox = cloud_filtered.make_voxel_grid_filter()
     # Choose a voxel (also known as leaf) size
-    LEAF_SIZE = 0.01
+    LEAF_SIZE = 0.001
     # set the voxel (or leaf)size
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     # Call the filter function to obtain the resultant downsampled point cloud
@@ -102,11 +102,11 @@ def pcl_callback(pcl_msg):
     axis_min = -0.5  # trials:
     axis_max = 0.5  # trials:
     passthrough.set_filter_limits(axis_min, axis_max)
-    # generate the resultant point cloud
-    cloud_filtered = passthrough.filter()
+    # generate the resultant point cloud; was cloud_filtered =
+    cloud_objects = passthrough.filter()
     filename = './debug/passthrough_filter_y.pcd'
     pcl.save(cloud_filtered, filename)
-
+'''
     # RANSAC plane segmentation
     # create the segmentation object
     seg = cloud_filtered.make_segmenter()
@@ -129,6 +129,7 @@ def pcl_callback(pcl_msg):
     cloud_objects = cloud_filtered.extract(inliers, negative=True)
     filename = './debug/extracted_inliers.pcd'
     pcl.save(cloud_objects, filename)
+'''
 
     # TODO: Euclidean Clustering
     white_cloud = XYZRGB_to_XYZ(cloud_objects)
@@ -208,6 +209,8 @@ def pcl_callback(pcl_msg):
     # create new cloud containing all clusters, each with unique color
     cluster_cloud = pcl.PointCloud_PointXYZRGB()
     cluster_cloud.from_list(color_cluster_point_list)
+    filename = './debug/cluster_clouds.pcd'
+    pcl.save(cluster_cloud, filename)
 
     # TODO: Convert PCL data to ROS messages
     ros_cloud_objects = pcl_to_ros(cloud_objects)
