@@ -232,28 +232,49 @@ def pr2_mover(object_list):
     centroids = []
     yaml_list = []
 
+    #intitialize the data types for the test_scene_number and object_name variables
+    test_scene_num  = Int32()
+    object_name = String()
+
+
     # TODO: Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
     # TODO: Parse parameters into individual variables
-    object_name = object_list_param[i]['name']
-    object_group = object_list_param[i]['group']
+    #object_name = object_list_param[i]['name']
+    #object_group = object_list_param[i]['group']
     # TODO: Rotate PR2 in place to capture side tables for the collision map
 
     # TODO: Loop through the pick list
-    for y in enumerate(object_name):
+    for i in object_list_param:
 
-        if any(object_list.label == object_name for x in enumerate(object_list)):
+        # separate the object name and group variables to iterate through
+        object_name = object_list_param[i]['name']
+        object_group = object_list_param[i]['group']
 
-            # TODO: Get the PointCloud for a given object and obtain it's centroid
+        # for loop to iterate the detected objects
+        for j, detected_val in enumerate(object_list):
+
+            if object_name != detected_val.label:
+                # if the object from the pick list doesn't match any of the detected objects, skip that item.
+                continue
+
+            # TODO: Calculate the centroid of the object to pick
             # add the object list label to the labels list. object_list.label points to detected object
             labels.append(object_list.label)
             # convert the object to an array
             points_arr = ros_to_pcl(object_list.cloud).to_array()
-            # compute the centroid of the object
+            # compute the centroid of the object, data will be float64 => convert to python/ROS format
             centroids.append(np.asscalar(np.mean(points_arr, axis=0))[:3])
 
-            # TODO: Create 'place_pose' for the object
+            # set the test scene number or grab it from the
+            scene_number = 1
+            test_scene_num.data = scene_number
 
+            # set the object name for the current object
+            object_name.data = object_list_param[i]['name']
+
+
+            # TODO: Create 'place_pose' for the object
             # TODO: Assign the arm to be used for pick_place
 
             # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
@@ -262,9 +283,14 @@ def pr2_mover(object_list):
             pick_pose.position.y = centroids[1]
             pick_pose.position.z = centroids[2]
 
-            yaml_object = make_yaml_dict(0,0,0,pick_pose,0)
+            # MAKE THE YAML FILE
+            # input format for the yaml function below
+            # make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
+            yaml_dict = make_yaml_dict(None,None,None,pick_pose,None)
 
             yaml_list.append(yaml_object)
+
+        send_to_yaml(output_1.yaml, yaml_list)
 
         # Wait for 'pick_place_routine' service to come up
         rospy.wait_for_service('pick_place_routine')
