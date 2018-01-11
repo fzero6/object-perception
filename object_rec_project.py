@@ -65,7 +65,7 @@ def pcl_callback(pcl_msg):
     cloud_filtered = outlier_filter.filter()
     #debug checking
     filename = './debug/outlier_removal.pcd'
-    pcl.save(cloud_objects, filename)
+    pcl.save(cloud_filtered, filename)
 
 
     # create a voxelgrid filter object for our input point cloud
@@ -108,13 +108,13 @@ def pcl_callback(pcl_msg):
     # Extract table
     cloud_table = cloud_filtered.extract(inliers, negative=False)
     filename = './debug/extracted outliers.pcd'
-    pcl.save(cloud_filtered, filename)
+    pcl.save(cloud_table, filename)
 
     # Extract outliers
     # create the filter objectd
     cloud_objects = cloud_filtered.extract(inliers, negative=True)
     filename = './debug/extracted_inliers.pcd'
-    pcl.save(cloud_filtered, filename)
+    pcl.save(cloud_objects, filename)
 
     # TODO: Euclidean Clustering
     white_cloud = XYZRGB_to_XYZ(cloud_objects)
