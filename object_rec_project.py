@@ -52,82 +52,77 @@ def pcl_callback(pcl_msg):
     # Convert ROS msg to PCL data
     cloud = ros_to_pcl(pcl_msg)
 
-    # create a voxelgrid filter object for our input point cloud
-    vox = cloud.make_voxel_grid_filter()
+    # perform outlier filtering first to clean up the images
+    outlier_filter = cloud.make_statistical_outlier_filter()
+    # set the number of points to analyze for any given point
+    outlier_filter.set_mean_k(50)
+    # set threshold scale factor; tested values ...
+    x = 1.0
+    # any point with a mean distance large than the global (mean distance + x * std_dev)
+    # will be considered outlier
+    outlier_filter.set_std_dev_mul_thresh(x)
+    # call the filter function
+    cloud_filtered = outlier_filter.filter()
+    #debug checking
+    filename = './debug/outlier_removal.pcd'
+    pcl.save(cloud_objects, filename)
 
+
+    # create a voxelgrid filter object for our input point cloud
+    vox = cloud_filtered.make_voxel_grid_filter()
     # Choose a voxel (also known as leaf) size
     LEAF_SIZE = 0.01
-
     # set the voxel (or leaf)size
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
-
     # Call the filter function to obtain the resultant downsampled point cloud
     cloud_filtered = vox.filter()
-    # filename = 'voxel_downsampled.pcd'
-    # pcl.save(cloud_filtered, filename)
+    filename = './debug/voxel_downsampled.pcd'
+    pcl.save(cloud_filtered, filename)
 
     # PassThrough filter
     # create pass through filter object
     passthrough = cloud_filtered.make_passthrough_filter()
-
-    # assign axis and ranve to the passthrough filter object
+    # assign axis and range to the pass through filter object
     filter_axis = 'z'
     passthrough.set_filter_field_name(filter_axis)
     axis_min = 0.6
     axis_max = 1.1
     passthrough.set_filter_limits(axis_min, axis_max)
-
     # generate the resultant point cloud
     cloud_filtered = passthrough.filter()
+    filename = './debug/passthrough_filter.pcd'
+    pcl.save(cloud_filtered, filename)
 
     # RANSAC plane segmentation
     # create the segmentation object
     seg = cloud_filtered.make_segmenter()
-
     # set the model to fit
     seg.set_model_type(pcl.SACMODEL_PLANE)
     seg.set_method_type(pcl.SAC_RANSAC)
-
     # Max distance for a point to be considered fitting the model
     max_distance = 0.01
     seg.set_distance_threshold(max_distance)
-
     # call the segment function to obtain set of inlier indices and model coefficients
     inliers, coefficients = seg.segment()
 
     # Extract table
     cloud_table = cloud_filtered.extract(inliers, negative=False)
-    # filename = 'cloud_table.pcd'
-    # pcl.save(cloud_table, filename)
-
-    # Extract objects
-    # cloud_objects = cloud_filtered.extract(inliers, negative=True)
+    filename = './debug/extracted outliers.pcd'
+    pcl.save(cloud_filtered, filename)
 
     # Extract outliers
     # create the filter objectd
-    objects = cloud_filtered.extract(inliers, negative=True)
-
-    outlier_filter = objects.make_statistical_outlier_filter()
-
-    # set the number of points to analyze for any given point
-    outlier_filter.set_mean_k(50)
-    # set threshold scale factor
-    x = 1.0
-    # any point with a mena distance large than the global (mean distance + x * std_dev)
-    # will be considered outlier
-    outlier_filter.set_std_dev_mul_thresh(x)
-    # call the filter function
-    cloud_objects = outlier_filter.filter()
+    cloud_objects = cloud_filtered.extract(inliers, negative=True)
+    filename = './debug/extracted_inliers.pcd'
+    pcl.save(cloud_filtered, filename)
 
     # TODO: Euclidean Clustering
     white_cloud = XYZRGB_to_XYZ(cloud_objects)
     tree = white_cloud.make_kdtree()
-
     # create cluster extraction
     ec = white_cloud.make_EuclideanClusterExtraction()
-
     # set the tolerances for
-    # minimum and maxium cluster sizes bound how big the cluster for each detected object will be.
+    # minimum and maximum cluster sizes bound how big the cluster for each detected object will be.
     # if max value is too small it will make too many clusters
     # if the minimum value is too large it will miss clusters
     ec.set_ClusterTolerance(0.05)
@@ -295,11 +290,11 @@ def pr2_mover(object_list):
 
             yaml_list.append(yaml_dict)
 
-        send_to_yaml(filename, yaml_list)
+    send_to_yaml(filename, yaml_list)
 
         # Wait for 'pick_place_routine' service to come up
-        rospy.wait_for_service('pick_place_routine')
-
+        #rospy.wait_for_service('pick_place_routine')
+'''
         try:
             pick_place_routine = rospy.ServiceProxy('pick_place_routine', PickPlace)
 
@@ -312,7 +307,7 @@ def pr2_mover(object_list):
             print "Service call failed: %s"%e
 
     # TODO: Output your request parameters into output yaml file
-
+'''
 
 
 if __name__ == '__main__':
