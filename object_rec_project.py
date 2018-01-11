@@ -56,8 +56,8 @@ def pcl_callback(pcl_msg):
     outlier_filter = cloud.make_statistical_outlier_filter()
     # set the number of points to analyze for any given point
     outlier_filter.set_mean_k(50)
-    # set threshold scale factor; tested values ...
-    x = 1.0
+    # set threshold scale factor; tested values: 1.0
+    x = 0.1
     # any point with a mean distance large than the global (mean distance + x * std_dev)
     # will be considered outlier
     outlier_filter.set_std_dev_mul_thresh(x)
@@ -82,15 +82,29 @@ def pcl_callback(pcl_msg):
     # PassThrough filter
     # create pass through filter object
     passthrough = cloud_filtered.make_passthrough_filter()
-    # assign axis and range to the pass through filter object
+    # set filter axis to z to isolate the table
     filter_axis = 'z'
     passthrough.set_filter_field_name(filter_axis)
-    axis_min = 0.6
-    axis_max = 1.1
+    axis_min = 0.7  # trials: 0.6
+    axis_max = 1.0  # trials: 1.1
     passthrough.set_filter_limits(axis_min, axis_max)
     # generate the resultant point cloud
     cloud_filtered = passthrough.filter()
-    filename = './debug/passthrough_filter.pcd'
+    filename = './debug/passthrough_filter_z.pcd'
+    pcl.save(cloud_filtered, filename)
+
+    # PassThrough filter
+    # create pass through filter object
+    passthrough = cloud_filtered.make_passthrough_filter()
+    # set filter axis to y to isolate the table objects on table and remove peripheral edges of table
+    filter_axis = 'y'
+    passthrough.set_filter_field_name(filter_axis)
+    axis_min = -0.5  # trials:
+    axis_max = 0.5  # trials:
+    passthrough.set_filter_limits(axis_min, axis_max)
+    # generate the resultant point cloud
+    cloud_filtered = passthrough.filter()
+    filename = './debug/passthrough_filter_y.pcd'
     pcl.save(cloud_filtered, filename)
 
     # RANSAC plane segmentation
@@ -107,7 +121,7 @@ def pcl_callback(pcl_msg):
 
     # Extract table
     cloud_table = cloud_filtered.extract(inliers, negative=False)
-    filename = './debug/extracted outliers.pcd'
+    filename = './debug/extracted_outliers.pcd'
     pcl.save(cloud_table, filename)
 
     # Extract outliers
@@ -260,7 +274,7 @@ def pr2_mover(object_list):
 
             # TODO: Calculate the centroid of the object to pick
             # add the object list label to the labels list. object_list.label points to detected object
-            labels.append(object_list.label)
+            #labels.append(object_list.label)
             # convert the object to an array
             points_arr = ros_to_pcl(object_list.cloud).to_array()
             # compute the centroid of the object, data will be float64 => convert to python/ROS format
