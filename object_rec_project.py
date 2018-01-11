@@ -230,37 +230,41 @@ def pr2_mover(object_list):
     labels = []
     #initializing list of tuples for the centroids (x, y, z)
     centroids = []
+    yaml_list = []
 
     # TODO: Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
     # TODO: Parse parameters into individual variables
     object_name = object_list_param[i]['name']
     object_group = object_list_param[i]['group']
-
     # TODO: Rotate PR2 in place to capture side tables for the collision map
 
     # TODO: Loop through the pick list
-    for item in object_name:
-        
-        # TODO: Get the PointCloud for a given object and obtain it's centroid
-        # add the object list label to the labels list. object_list.label points to detected object
-        labels.append(object_list.label)
-        # convert the object to an array
-        points_arr = ros_to_pcl(object_list.cloud).to_array()
-        # compute the centroid of the object
-        centroids.append(np.asscalar(np.mean(points_arr, axis=0))[:3])
+    for y in enumerate(object_name):
 
-        # TODO: Create 'place_pose' for the object
+        if any(object_list.label == object_name for x in enumerate(object_list)):
 
-        # TODO: Assign the arm to be used for pick_place
+            # TODO: Get the PointCloud for a given object and obtain it's centroid
+            # add the object list label to the labels list. object_list.label points to detected object
+            labels.append(object_list.label)
+            # convert the object to an array
+            points_arr = ros_to_pcl(object_list.cloud).to_array()
+            # compute the centroid of the object
+            centroids.append(np.asscalar(np.mean(points_arr, axis=0))[:3])
 
-        # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
-        pick_pose = Pose()
-        pick_pose.position.x = centroids[0]
-        pick_pose.position.y = centroids[1]
-        pick_pose.position.z = centroids[2]
+            # TODO: Create 'place_pose' for the object
 
-        yaml_dict = make_yaml_dict(pick_pose)
+            # TODO: Assign the arm to be used for pick_place
+
+            # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
+            pick_pose = Pose()
+            pick_pose.position.x = centroids[0]
+            pick_pose.position.y = centroids[1]
+            pick_pose.position.z = centroids[2]
+
+            yaml_object = make_yaml_dict(0,0,0,pick_pose,0)
+
+            yaml_list.append(yaml_object)
 
         # Wait for 'pick_place_routine' service to come up
         rospy.wait_for_service('pick_place_routine')
@@ -286,7 +290,7 @@ if __name__ == '__main__':
     rospy.init_node('clustering', anonymous=True)
 
     # TODO: Create Subscribers
-    pcl_sub = rospy.Subscriber("/sensor_stick/point_cloud", pc2.PointCloud2, pcl_callback, queue_size=1)
+    pcl_sub = rospy.Subscriber("/pr2/world/points", pc2.PointCloud2, pcl_callback, queue_size=1)
 
     # TODO: Create Publishers
     pcl_objects_pub = rospy.Publisher("/pcl_objects", PointCloud2, queue_size=1)
