@@ -226,8 +226,13 @@ def pcl_callback(pcl_msg):
 def pr2_mover(object_list):
 
     # TODO: Initialize variables
-    # initializing list for labels
+
+    # set the filename for the output yaml file
+    filename = "output_1.yaml"
+
+    # initializing list for detected object labels
     labels = []
+
     #initializing list of tuples for the centroids (x, y, z)
     centroids = []
     yaml_list = []
@@ -248,8 +253,8 @@ def pr2_mover(object_list):
     for i in object_list_param:
 
         # separate the object name and group variables to iterate through
-        object_name = object_list_param[i]['name']
-        object_group = object_list_param[i]['group']
+        object_name = i['name']
+        object_group = i['group']
 
         # for loop to iterate the detected objects
         for j, detected_val in enumerate(object_list):
@@ -288,9 +293,9 @@ def pr2_mover(object_list):
             # make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
             yaml_dict = make_yaml_dict(None,None,None,pick_pose,None)
 
-            yaml_list.append(yaml_object)
+            yaml_list.append(yaml_dict)
 
-        send_to_yaml(output_1.yaml, yaml_list)
+        send_to_yaml(filename, yaml_list)
 
         # Wait for 'pick_place_routine' service to come up
         rospy.wait_for_service('pick_place_routine')
