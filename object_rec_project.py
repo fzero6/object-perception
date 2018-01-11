@@ -97,10 +97,10 @@ def pcl_callback(pcl_msg):
     # create pass through filter object
     passthrough = cloud_filtered.make_passthrough_filter()
     # set filter axis to y to isolate the table objects on table and remove peripheral edges of table
-    filter_axis = 'y'
+    filter_axis = 'x'
     passthrough.set_filter_field_name(filter_axis)
-    axis_min = -0.4  # trials: -0.5(too large)
-    axis_max = 0.4  # trials: 0.5
+    axis_min = -0.5  # trials: -0.5(too large)
+    axis_max = 0.5  # trials: 0.5
     passthrough.set_filter_limits(axis_min, axis_max)
     # generate the resultant point cloud; was cloud_filtered =
     cloud_objects = passthrough.filter()
@@ -277,7 +277,7 @@ def pr2_mover(object_list):
 
             # TODO: Calculate the centroid of the object to pick
             # add the object list label to the labels list. object_list.label points to detected object
-            #labels.append(object_list.label)
+            labels.append(object_list.label)
             # convert the object to an array
             points_arr = ros_to_pcl(object_list.cloud).to_array()
             # compute the centroid of the object, data will be float64 => convert to python/ROS format
