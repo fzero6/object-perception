@@ -67,12 +67,11 @@ def pcl_callback(pcl_msg):
     # filename = './debug/outlier_removal.pcd'
     # pcl.save(cloud_filtered, filename)
 
-
-    # create a voxelgrid filter object for our input point cloud
+    # create a voxel grid filter object for our input point cloud
     vox = cloud_filtered.make_voxel_grid_filter()
     # Choose a voxel (also known as leaf) size
     LEAF_SIZE = 0.005
-    # set the voxel (or leaf)size
+    # set the voxel (or leaf) size
     vox.set_leaf_size(LEAF_SIZE, LEAF_SIZE, LEAF_SIZE)
     # Call the filter function to obtain the resultant downsampled point cloud
     cloud_filtered = vox.filter()
@@ -142,7 +141,7 @@ def pcl_callback(pcl_msg):
     # if max value is too small it will make too many clusters
     # if the minimum value is too large it will miss clusters
     ec.set_ClusterTolerance(0.05)
-    ec.set_MinClusterSize(100)
+    ec.set_MinClusterSize(50)
     ec.set_MaxClusterSize(2000)
     ec.set_SearchMethod(tree)
     cluster_indices = ec.Extract()
@@ -252,10 +251,6 @@ def pr2_mover(object_list):
 
     # TODO: Get/Read parameters
     object_list_param = rospy.get_param('/object_list')
-    # TODO: Parse parameters into individual variables
-    #object_name = object_list_param[i]['name']
-    #object_group = object_list_param[i]['group']
-    # TODO: Rotate PR2 in place to capture side tables for the collision map
 
     # TODO: Loop through the pick list
     for i in object_list_param:
@@ -276,10 +271,16 @@ def pr2_mover(object_list):
             labels.append(detected_val.label)
             # convert the object to an array
             points_arr = ros_to_pcl(detected_val.cloud).to_array()
-            # compute the centroid of the object, data will be float64 => convert to python/ROS format
-            centroid_data = np.mean(points_arr, axis=0)[:3]
-            for x in centroid_data:
-                centroids.append(np.asscalar(x))
+            # compute the centroid of the object, data will be float64 => convert to scalar
+            centroids = np.mean(points_arr, axis=0)[:3]
+
+            # initialize output format for the location of the objects
+            pick_pose = Pose()
+
+            # convert centroid data from float64 to python/ros format before output to ros/yaml file
+            pick_pose.position.x = np.asscalar(centroids[0])
+            pick_pose.position.x = np.asscalar(centroids[1])
+            pick_pose.position.x = np.asscalar(centroids[2])
 
             # set the test scene number or grab it from the
             test_scene_num = Int32()
@@ -291,7 +292,7 @@ def pr2_mover(object_list):
             object_name.data = i['name']
 
             # calculate the arm name based on the group name
-            # initialize the arm name data type
+            # initialize the arm name data type and place pose data type
             arm_name = String()
             place_pose = Pose()
             # use the left bin if the group name from yaml file is red
@@ -307,17 +308,12 @@ def pr2_mover(object_list):
                 place_pose.position.y = -0.71
                 place_pose.position.z = 0.605
 
-            # TODO: Create 'place_pose' for the object
-            # TODO: Assign the arm to be used for pick_place
-
-            # TODO: Create a list of dictionaries (made with make_yaml_dict()) for later output to yaml format
-            pick_pose = Pose()
-            pick_pose.position.x = centroids[0]
-            pick_pose.position.y = centroids[1]
-            pick_pose.position.z = centroids[2]
+            # debugging output to make sure items are not being double counted
+            print('processed: %s' % object_name.data)
 
             # MAKE THE YAML FILE for each detected item
             # input format for the yaml function below
+            # make function inputs order
             # make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
             yaml_dict = make_yaml_dict(test_scene_num, arm_name, object_name, pick_pose, place_pose)
 
